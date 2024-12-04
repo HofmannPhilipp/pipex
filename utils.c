@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:20:23 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/04 11:21:21 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/04 16:06:25 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,13 @@ void	print_cmd(char **cmd)
 }
 
 // first element must be shell command and all elements after must be flags
-char	**create_cmd(char *args)
+char	**create_cmd_args(char *args, char *filename)
 {
 	char **cmd;
 
-	cmd = ft_split(args, ' ');
+	char *cmd_args = ft_strjoin(args, " ");
+	cmd_args = ft_strjoin(cmd_args, filename);
+	cmd = ft_split(cmd_args, ' ');
 	if (cmd == NULL)
 	{
 		perror("create cmd");
@@ -41,7 +43,7 @@ char	**create_cmd(char *args)
 
 char *get_cmd_pathname(char *cmd, char *envp[])
 {
-	char	*pathname;
+	char	*pathname = "";
 	char	*argv[] = {"which", cmd, NULL};
 	
 	int fd[2];
@@ -68,46 +70,46 @@ char *get_cmd_pathname(char *cmd, char *envp[])
 		while ((bytes_read = read(fd[0], buffer, sizeof(buffer) - 1)) > 0)
 		{	
 			buffer[bytes_read] = '\0';
-			ft_strjoin(pathname, buffer);
+			pathname = ft_strjoin(pathname, buffer);
 		}
+		pathname = ft_strtrim(pathname, "\n \t");
 		close(fd[0]);
 	}
 	return (pathname);
 }
 
-void	run_cmd(char *cmd, char *envp[])
+void	run_cmd(char *cmd_pathname, char *cmd_args[])
 {
-	char *pathname;
 	int fd[2];
 	pid_t pid;
-	char **cmd_args;
 
-	pathname = get_cmd_pathname(cmd, envp);
-	cmd_args = create_cmd(cmd);
 	pipe(fd);
 	pid = fork();
-
+	// char *args[] = {"wc", "-l", "infile.txt", NULL};
 	if (pid == 0)
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
 		close(fd[1]);
-		execve(pathname, cmd_args, envp);
+		
+		execve(cmd_pathname, cmd_args, NULL);
 		perror("execve run_cmd");
 	}
 	else
 	{
-		close(fd[1]);
-		char buffer[256];
-		int bytes_read;
+		char	buffer[256];
+		int		bytes_read;
+		char	*res = "";
+
 		bytes_read = 0;
-		int status;
+		close(fd[1]);
 		wait(NULL);
 		while ((bytes_read = read(fd[0], buffer, sizeof(buffer) - 1)) > 0)
 		{	
 			buffer[bytes_read] = '\0';
-			ft_strjoin(pathname, buffer);
+			res = ft_strjoin(res, buffer);
 		}
+		printf("%s",res);
 		close(fd[0]);
 	}
 }
