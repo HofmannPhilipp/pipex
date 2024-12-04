@@ -6,14 +6,14 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/02 14:02:11 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/03 16:40:17 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/04 11:12:23 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
 
-int	main(int argc, char *argv[])
+int	main(int argc, char *argv[], char *envp[])
 {
 	if (argc != 5)
 	{
@@ -36,6 +36,7 @@ int	main(int argc, char *argv[])
 	outfile = argv[4];
 	cmd1 = create_cmd(argv[2]);
 	cmd2 = create_cmd(argv[3]);
+	print_cmd(cmd1);
 	// child proccess
 	if (pid == 0)
 		child(pipe_fd, infile, cmd1);
@@ -43,4 +44,5 @@ int	main(int argc, char *argv[])
 	// parent proccess
 	else
 		parent(pipe_fd, outfile, cmd2);
+	get_cmd_pathname("ls", envp);
 }
