@@ -6,11 +6,25 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:20:23 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/04 16:06:25 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/06 11:03:26 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+
+void	print_fd(int fd)
+{
+	char	buffer[256];
+	int		bytes_read;
+	char	*res = "";
+	
+	while ((bytes_read = read(fd, buffer, sizeof(buffer) - 1)) > 0)
+	{	
+		buffer[bytes_read] = '\0';
+		res = ft_strjoin(res, buffer);
+	}
+	ft_printf("%s",res);
+}
 
 void	print_cmd(char **cmd)
 {
@@ -25,91 +39,57 @@ void	print_cmd(char **cmd)
 	ft_printf("\n");
 }
 
-// first element must be shell command and all elements after must be flags
-char	**create_cmd_args(char *args, char *filename)
+void	handle_error(char *error_msg)
 {
-	char **cmd;
-
-	char *cmd_args = ft_strjoin(args, " ");
-	cmd_args = ft_strjoin(cmd_args, filename);
-	cmd = ft_split(cmd_args, ' ');
-	if (cmd == NULL)
-	{
-		perror("create cmd");
-		exit(EXIT_FAILURE);
-	}
-	return (cmd);
-}
-
-char *get_cmd_pathname(char *cmd, char *envp[])
-{
-	char	*pathname = "";
-	char	*argv[] = {"which", cmd, NULL};
-	
-	int fd[2];
-	pipe(fd);
-	pid_t pid = fork();
-
-	if(pid == 0)
-	{
-		close(fd[0]);
-		dup2(fd[1], STDOUT_FILENO);
-		close(fd[1]);
-		execve("/usr/bin/which", argv, envp);
-		perror("execve which failed");
-		exit(EXIT_FAILURE);
-	}
+	if (!error_msg)
+		perror(NULL);
 	else
-	{
-		close(fd[1]);
-		char buffer[256];
-		int bytes_read;
-		bytes_read = 0;
-		int status;
-		wait(NULL);
-		while ((bytes_read = read(fd[0], buffer, sizeof(buffer) - 1)) > 0)
-		{	
-			buffer[bytes_read] = '\0';
-			pathname = ft_strjoin(pathname, buffer);
-		}
-		pathname = ft_strtrim(pathname, "\n \t");
-		close(fd[0]);
-	}
-	return (pathname);
+		fprintf(stderr, "%s: %s\n",error_msg, strerror(errno));
+	exit(EXIT_FAILURE);
 }
 
-void	run_cmd(char *cmd_pathname, char *cmd_args[])
-{
-	int fd[2];
-	pid_t pid;
 
-	pipe(fd);
-	pid = fork();
-	// char *args[] = {"wc", "-l", "infile.txt", NULL};
+
+char	*run_cmd(char *cmd_pathname, char *cmd_args[], char *filename)
+{
+	int p_fd[2];
+	pid_t pid;
+	char	buffer[256];
+	int		bytes_read;
+	char	*res = "";
+	int		fd_infile;
+	
+	if (access(filename, R_OK) != 0)
+		handle_error("Read access failed: ");
+	fd_infile = open(filename, O_RDONLY);
+	if (fd_infile < 0)
+		handle_error("Infile open failed: ");
+	if (pipe(p_fd) == -1)
+		handle_error("Pipe failed: ");
+	// pid = fork();
+	// if (pid < 0)
+	// 	handle_error("Fork failed: ");
 	if (pid == 0)
 	{
-		close(fd[0]);
-		dup2(fd[1], STDOUT_FILENO);
-		close(fd[1]);
-		
+		close(p_fd[0]);
+		dup2(p_fd[1], STDOUT_FILENO);
+		close(p_fd[1]);
+		dup2(fd_infile, STDIN_FILENO);
+		close(fd_infile);
 		execve(cmd_pathname, cmd_args, NULL);
-		perror("execve run_cmd");
+		handle_error("Execve failed: ");
 	}
 	else
 	{
-		char	buffer[256];
-		int		bytes_read;
-		char	*res = "";
-
 		bytes_read = 0;
-		close(fd[1]);
+		close(p_fd[1]);
 		wait(NULL);
-		while ((bytes_read = read(fd[0], buffer, sizeof(buffer) - 1)) > 0)
+		while ((bytes_read = read(p_fd[0], buffer, sizeof(buffer) - 1)) > 0)
 		{	
 			buffer[bytes_read] = '\0';
 			res = ft_strjoin(res, buffer);
 		}
-		printf("%s",res);
-		close(fd[0]);
+		close(p_fd[0]);
 	}
+	return (res);
 }
