@@ -6,73 +6,34 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 16:31:20 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/06 09:41:34 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:45:12 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-void	*run_cmd2(char *cmd_pathname, char *cmd_args[], char *filename);
+static void	run(char *cmd_pathname, char *cmd_args[], int file_fd);
 
-void	parent(int pipe_fd[2], char *outfile, char *cmd, char *envp[])
+void	parent(int pipe_fd[2], int file_fd, char *cmd, char *envp[])
 {
-	char	buffer[256];
-	int		bytes_read;
-	char	*res = "";
-
-	bytes_read = 0;
+	char **cmd_args;
+	char *cmd_pathname;
+	
 	close(pipe_fd[1]);
 	wait(NULL);
 	dup2(pipe_fd[0],STDIN_FILENO);
 	close(pipe_fd[0]);
-	// while ((bytes_read = read(0, buffer, sizeof(buffer) - 1)) > 0)
-	// {	
-	// 	buffer[bytes_read] = '\0';
-	// 	res = ft_strjoin(res, buffer);
-	// }
-	char **cmd_args;
-	char *cmd_pathname;
-	// printf("%s",res);
 	cmd_args = create_cmd_args(cmd);
+	if (access(cmd_args[0], X_OK) != 0)
+		handle_error("Invalid Command");
 	cmd_pathname = get_cmd_pathname(cmd_args[0], envp);
-	print_cmd(cmd_args);
-	ft_printf("%s\n", cmd_pathname);
-	run_cmd2(cmd_pathname, cmd_args, outfile);
-	// print_cmd(cmd_args);
-	// ft_printf("%s",final);
+	run(cmd_pathname, cmd_args, file_fd);
 }
 
-void	*run_cmd2(char *cmd_pathname, char *cmd_args[], char *filename)
+static void	run(char *cmd_pathname, char *cmd_args[], int file_fd)
 {
-	// int p_fd[2];
-	// pid_t pid;
-	// char	buffer[256];
-	// int		bytes_read;
-	// char	*res = "";
-
-	// while ((bytes_read = read(0, buffer, sizeof(buffer) - 1)) > 0)
-	// {	
-	// 	buffer[bytes_read] = '\0';
-	// 	res = ft_strjoin(res, buffer);
-	// }
-	
-	int		fd;
-	
-	if (access(filename, W_OK) != 0)
-	{
-		perror("read acces failed");
-		exit(EXIT_FAILURE);
-	}
-	fd = open(filename, O_WRONLY);
-	if (fd < 0)
-	{
-		perror("infile open failed");
-		exit(EXIT_FAILURE);
-	}
-	dup2(fd, STDOUT_FILENO);
-	close(fd);
+	dup2(file_fd, STDOUT_FILENO);
+	close(file_fd);
 	execve(cmd_pathname, cmd_args, NULL);
-	perror("execve run_cmd");
-	
-	exit(1);
+	handle_error("Excecve failed");
 }
