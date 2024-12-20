@@ -6,33 +6,41 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:16:43 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/09 18:43:03 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/20 16:07:46 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-static void	run(int pipe_fd[2], char *cmd_pathname, char *cmd_args[], int file_fd);
+static void	run(int end[2], char *cmd_path, char *cmd_args[], int fd);
 
-void	child(int pipe_fd[2], int file_fd, char *cmd, char *envp[])
+void	child(int end[2],char *argv[], char *envp[])
 {
+	int		fd;
+	char	*cmd_path;
 	char	**cmd_args;
-	char	*cmd_pathname;
 
-	close(pipe_fd[0]);
-	
-	cmd_args = create_cmd_args(cmd);
-	if (access(cmd_args[0], X_OK) != 0)
-		handle_error("Invalid Command");
-	cmd_pathname = get_cmd_pathname(cmd_args[0], envp);
-	run(pipe_fd, cmd_pathname, cmd_args, file_fd);
-	close(pipe_fd[1]);
+	close(end[0]);
+	fd = open(argv[1], O_RDONLY);
+	if (fd < 0)
+		handle_error("Open Infile failed");
+	cmd_args = create_cmd_args(argv[2]);
+	cmd_path = get_cmd_path(cmd_args[0], envp);
+	run(end, cmd_path, cmd_args, fd);
+	free_split(cmd_args);
+	free(cmd_path);
+	close(end[1]);
 }
-static void	run(int pipe_fd[2], char *cmd_pathname, char *cmd_args[], int file_fd)
+static void	run(int end[2],char *cmd_path, char *cmd_args[], int fd)
 {
-	dup2(file_fd, STDIN_FILENO);
-	close(file_fd);
-	dup2(pipe_fd[1], STDOUT_FILENO);
-	execve(cmd_pathname, cmd_args, NULL);
-	handle_error("Execve failed");
+	dup2(fd, STDIN_FILENO);
+	close(fd);
+	dup2(end[1], STDOUT_FILENO);
+	if (execve(cmd_path, cmd_args, NULL) == -1)
+	{
+		free_split(cmd_args);
+		free(cmd_path);
+		handle_error("Execve failed");
+	}
+		
 }

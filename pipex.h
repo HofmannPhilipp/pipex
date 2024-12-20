@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:18:27 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/09 16:27:54 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/20 16:06:23 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,17 +21,17 @@
 
 
 // child
-void	child(int pipe_fd[2], int file_fd, char *cmd, char *envp[]);
-
+void	child(int end[2],char *argv[], char *envp[]);
 // parent
-void	parent(int pipe_fd[2], int file_fd, char *cmd, char *envp[]);
-
+void	parent(int end[2], char *argv[], char *envp[]);
 // utils
+void	free_split(char **split);
 char	**create_cmd_args(char *args);
-void	print_cmd(char **cmd);
 void	handle_error(char *error_msg);
+char	*get_envp(char *name, char *envp[]);
+char	*get_cmd_path(char *cmd, char *envp[]);
 
-// cmd
-char	*get_cmd_pathname(char *cmd, char *envp[]);
+
+void	pipex(char *args[], char *envp[]);
 
 #endif
