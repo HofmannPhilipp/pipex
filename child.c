@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:16:43 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/20 16:07:46 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/20 16:39:17 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ void	child(int end[2],char *argv[], char *envp[])
 		handle_error("Open Infile failed");
 	cmd_args = create_cmd_args(argv[2]);
 	cmd_path = get_cmd_path(cmd_args[0], envp);
+	if (cmd_path == NULL)
+		handle_error("No path found");
 	run(end, cmd_path, cmd_args, fd);
 	free_split(cmd_args);
 	free(cmd_path);
@@ -42,5 +44,4 @@ static void	run(int end[2],char *cmd_path, char *cmd_args[], int fd)
 		free(cmd_path);
 		handle_error("Execve failed");
 	}
-		
 }

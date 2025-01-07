@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 16:31:20 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/20 16:03:06 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/23 16:54:21 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ void	parent(int end[2],char *argv[], char *envp[])
 	dup2(end[0],STDIN_FILENO);
 	close(end[0]);
 	cmd_args = create_cmd_args(argv[3]);
-	cmd_path = get_cmd_path(argv[3], envp);
-	fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0777);
+	cmd_path = get_cmd_path(cmd_args[0], envp);
+	fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0)
 		handle_error("Open Outfile failed");
 	run(cmd_path, cmd_args, fd);

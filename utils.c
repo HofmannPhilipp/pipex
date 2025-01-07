@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:20:23 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/20 16:15:56 by phhofman         ###   ########.fr       */
+/*   Updated: 2024/12/20 16:38:10 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,6 @@ char	*get_cmd_path(char *cmd, char *envp[])
 	}
 	free(cmd);
 	free_split(paths);
-	handle_error("No path found");
 	return (NULL);
 }
 
