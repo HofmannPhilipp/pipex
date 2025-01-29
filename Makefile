@@ -1,8 +1,9 @@
 CC = cc
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -I.
 NAME = pipex
-SRCS = main.c parent.c child.c cmd.c utils.c pipex.c
-
+SRCS_DIR = ./src
+SRCS =	$(SRCS_DIR)/main.c $(SRCS_DIR)/parent.c $(SRCS_DIR)/child.c \
+		$(SRCS_DIR)/cmd.c $(SRCS_DIR)/utils.c $(SRCS_DIR)/pipex.c
 OBJS = $(SRCS:.c=.o)
 LIBFT_DIR = ./libft
 LIBFT = $(LIBFT_DIR)/libft.a

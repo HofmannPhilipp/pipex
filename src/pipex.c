@@ -1,25 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/12/02 14:02:11 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/23 14:12:16 by phhofman         ###   ########.fr       */
+/*   Created: 2024/12/09 18:27:13 by phhofman          #+#    #+#             */
+/*   Updated: 2025/01/29 15:04:39 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-
-int	main(int argc, char *argv[], char *envp[])
+void	pipex(char *args[], char *envp[])
 {
-	if (argc != 5)
+	int		pipe_fd[2];
+	pid_t	pid;
+	int		status;
+
+	if (pipe(pipe_fd) == -1)
+		handle_error(NULL, EXIT_FAILURE);
+	pid = fork();
+	if (pid < 0)
+		handle_error(NULL, EXIT_FAILURE);
+	if (pid == 0)
+		child(pipe_fd, args, envp);
+	else
 	{
-		ft_printf("Execute: %s <infile> <cmd1> <cmd2> <outfile>\n", argv[0]);
-		handle_error("Error: Invalid arguments");
+		parent(pipe_fd, args, envp);
+		waitpid(pid, &status, 0);
 	}
-	pipex(argv, envp);
-	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:20:23 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/20 16:38:10 by phhofman         ###   ########.fr       */
+/*   Updated: 2025/01/29 15:03:14 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,13 @@ void	free_split(char **split)
 	free(split);
 }
 
-void	handle_error(char *error_msg)
+void	handle_error(char *error_msg, int exit_status)
 {
-	perror(error_msg);
-	exit(EXIT_FAILURE);
+	if (error_msg)
+		ft_printf("%s\n", error_msg);
+	else
+		perror(NULL);
+	exit(exit_status);
 }
 
 char	*get_envp(char *name, char *envp[])
@@ -42,8 +45,8 @@ char	*get_envp(char *name, char *envp[])
 	while (envp[i] != NULL)
 	{
 		sub = ft_substr(envp[i], 0, len);
-		if (sub == NULL)
-			handle_error("get_cmd_path malloc failed");
+		if (!sub)
+			return (NULL);
 		if (ft_strncmp(name, sub, len) == 0)
 		{
 			free(sub);
@@ -52,36 +55,47 @@ char	*get_envp(char *name, char *envp[])
 		free(sub);
 		i++;
 	}
-	handle_error("No PATHS found in envp");
 	return (NULL);
 }
+
 char	*get_cmd_path(char *cmd, char *envp[])
 {
 	char	**paths;
-	int		i;
 	char	*path;
+	int		i;
+	char	*cmd_temp;
 
-	paths = ft_split(get_envp("PATH", envp), ':');
-	cmd = ft_strjoin("/", cmd);
-	if (cmd == NULL || paths == NULL)
-		handle_error("Malloc failed in get_cmd_path");
+	cmd_temp = ft_strjoin("/", cmd);
+	if (!cmd_temp)
+		return (NULL);
+	paths = get_paths(envp);
 	i = 0;
 	while (paths[i] != NULL)
 	{
-		path = ft_strjoin(paths[i], cmd);
-		if (path == NULL)
-			handle_error("get_cmd_path join malloc failed");
+		path = ft_strjoin(paths[i], cmd_temp);
+		if (!path)
+			return (free(cmd_temp), free_split(paths), NULL);
 		if (access(path, F_OK | X_OK) == 0)
-		{
-			free(cmd);
-			free_split(paths);
-			return (path);
-		}
+			return (free(cmd_temp), free_split(paths), path);
 		free(path);
 		i++;
 	}
-	free(cmd);
-	free_split(paths);
-	return (NULL);
+	return (free(cmd_temp), free_split(paths), NULL);
 }
 
+char	**get_paths(char *envp[])
+{
+	char	*env;
+	char	**paths;
+
+	env = get_envp("PATH", envp);
+	if (!envp)
+	{
+		ft_printf("No path found");
+		return (NULL);
+	}
+	paths = ft_split(env, ':');
+	if (!paths)
+		return (NULL);
+	return (paths);
+}

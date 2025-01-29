@@ -6,42 +6,53 @@
 /*   By: phhofman <phhofman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/03 14:16:43 by phhofman          #+#    #+#             */
-/*   Updated: 2024/12/20 16:39:17 by phhofman         ###   ########.fr       */
+/*   Updated: 2025/01/29 15:00:29 by phhofman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-static void	run(int end[2], char *cmd_path, char *cmd_args[], int fd);
+static int	open_and_dup(char *file, int pipe_fd[2]);
 
-void	child(int end[2],char *argv[], char *envp[])
+void	child(int pipe_fd[2], char *argv[], char *envp[])
 {
-	int		fd;
 	char	*cmd_path;
 	char	**cmd_args;
 
-	close(end[0]);
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		handle_error("Open Infile failed");
-	cmd_args = create_cmd_args(argv[2]);
+	close(pipe_fd[0]);
+	cmd_args = ft_split(argv[2], ' ');
+	if (!cmd_args)
+		exit(EXIT_FAILURE);
 	cmd_path = get_cmd_path(cmd_args[0], envp);
-	if (cmd_path == NULL)
-		handle_error("No path found");
-	run(end, cmd_path, cmd_args, fd);
-	free_split(cmd_args);
-	free(cmd_path);
-	close(end[1]);
-}
-static void	run(int end[2],char *cmd_path, char *cmd_args[], int fd)
-{
-	dup2(fd, STDIN_FILENO);
-	close(fd);
-	dup2(end[1], STDOUT_FILENO);
-	if (execve(cmd_path, cmd_args, NULL) == -1)
+	if (!cmd_path)
+	{
+		free_split(cmd_args);
+		handle_error("command not found", 127);
+	}
+	if (open_and_dup(argv[1], pipe_fd) == EXIT_FAILURE)
 	{
 		free_split(cmd_args);
 		free(cmd_path);
-		handle_error("Execve failed");
+		exit(EXIT_FAILURE);
 	}
+	execve(cmd_path, cmd_args, envp);
+	free_split(cmd_args);
+	free(cmd_path);
+	exit(EXIT_FAILURE);
+}
+
+static int	open_and_dup(char *file, int pipe_fd[2])
+{
+	int	fd;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (EXIT_FAILURE);
+	if (dup2(fd, STDIN_FILENO) < 0)
+		return (EXIT_FAILURE);
+	close(fd);
+	if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
+		return (EXIT_FAILURE);
+	close(pipe_fd[1]);
+	return (EXIT_SUCCESS);
 }
